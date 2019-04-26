@@ -1,65 +1,56 @@
-var http = require('http')
+var formidable = require('formidable')
+var express = require('express')
+var fs = require('fs')
+const fileType = require('file-type')
 
-http.createServer((request, response) => {
-  const { headers, method, url } = request;
-  let body = [];
-  request.on('error', (err) => {
-    console.error(err);
-  }).on('data', (chunk) => {
-    body.push(chunk);
-  }).on('end', () => {
-    body = Buffer.concat(body).toString();
+var app = express()
 
-    response.on('error', (err) => {
-      console.error(err);
-    });
+app.get('/', function (req, res){
+  res.send('IPFS ONLINE');
+});
 
-    if(method === 'GET' && url.indexOf('/get/') !== -1){
-        const hash = url.replace('/get/','',url)
-        if(hash.length === 46){
-            const IPFS = require('ipfs')
-            const node = new IPFS({ repo: '~/.ipfs' })
-            node.on('ready', () => {
-              if(hash){ 
-                node.cat(hash, function (err, file) {
-                    if (err) {
-                        throw err
-                    }
-                    const fileType = require('file-type')
-                    var mimetype = fileType(file)
-                    if(mimetype){
-                      response.setHeader('Content-Type', mimetype.mime);
-                    }
-                    response.end(file)
-                    node.stop()
-                })
-              }
+app.post('/add', function (req, res){
+  var form = new formidable.IncomingForm();
+
+  form.parse(req);
+
+  form.on('file', function (name, file){
+      console.log('UPLOADING FROM ' + file.path + ' TO IPFS');
+      fs.readFile(file.path, function(error, content){
+        const IPFS = require('ipfs')
+        const node = new IPFS({ repo: '~/.ipfs' })
+        node.on('ready', () => {
+          node.add(content).then(results => {
+            const hash = results[0].hash
+            res.send({
+              hash: hash,
+              filename: file.name,
+              type: file.type,
+              status: 200
             })
-
-              /*
-
-            node.on('ready', () => {
-              const content = IPFS.Buffer.from(contents)
-              node.add(content).then(results => {
-                const hash = results[0].hash
-                if(hash){ 
-                  node.cat(hash, function (err, file) {
-                      if (err) {
-                          throw err
-                      }
-                      //NEED TO READ MIMETYPE
-                      node.stop()
-                  })
-                }
-              })
-            })*/
-              
-        }else{
-            response.statusCode = 404;
-            response.write('PROVIDE IPFS HASH FIRST')
-            response.end()
-        }
-    } //GET METHOD
-    
+            node.stop()
+          })
+        })
+      })
   });
-}).listen(3000);
+});
+
+app.get('/get/:hash', function (req, res){
+  const IPFS = require('ipfs')
+  const node = new IPFS({ repo: '~/.ipfs' })
+  const hash = req.params.hash
+
+  node.on('ready', () => {
+    node.cat(hash, function (err, file) {
+      if (err) {
+          throw err
+      }
+      var mimetype = fileType(file)
+      res.setHeader('Content-Type', mimetype.mime);
+      res.end(file)
+      node.stop()
+    })
+  })
+});
+
+app.listen(3000);
