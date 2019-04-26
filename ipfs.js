@@ -23,9 +23,11 @@ app.post('/add', function (req, res){
           node.add(content).then(results => {
             const hash = results[0].hash
             res.send({
-              hash: hash,
-              filename: file.name,
-              type: file.type,
+              data: {
+                hash: hash,
+                filename: file.name,
+                type: file.type
+              },
               status: 200
             })
             node.stop()
@@ -48,6 +50,24 @@ app.get('/get/:hash', function (req, res){
       var mimetype = fileType(file)
       res.setHeader('Content-Type', mimetype.mime);
       res.end(file)
+      node.stop()
+    })
+  })
+});
+
+app.get('/readpin', function (req, res){
+  const IPFS = require('ipfs')
+  const node = new IPFS({ repo: '~/.ipfs' })
+
+  node.on('ready', () => {
+    node.pin.ls({ type: 'recursive' }, function (err, pinset) {
+      if (err) {
+        throw err
+      }
+      res.send({
+        data: pinset,
+        status: 200
+      })
       node.stop()
     })
   })
