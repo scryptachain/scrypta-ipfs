@@ -7,6 +7,17 @@ var app = express()
 const IPFS = require('ipfs')
 const node = new IPFS({ repo: '~/.ipfs' })
 
+app.get('/info', function (req, res){
+  setTimeout(function(){
+    node.version(function (err, version) {
+      if (err) {
+        throw err
+      }
+      res.send(version.version)
+    })
+  }, 10 * Math.floor((Math.random() * 10) + 1))
+});
+
 app.post('/add', function (req, res){
   setTimeout(function () {
     var form = new formidable.IncomingForm();
@@ -21,7 +32,6 @@ app.post('/add', function (req, res){
               },
               status: 200
             })
-            //node.stop()
           })
         })
     });
@@ -35,7 +45,6 @@ app.post('/add', function (req, res){
           },
           status: 200
         })
-        //node.stop()
       })
   });
   }, 10 * Math.floor((Math.random() * 10) + 1))
@@ -55,7 +64,6 @@ app.post('/verify/:hash', function (req, res){
             }else{
               res.send(true)
             }
-            //node.stop()
           })
         })
     });
@@ -74,7 +82,6 @@ app.get('/get/:hash', function (req, res){
         res.setHeader('Content-Type', mimetype.mime);
       }
       res.end(file)
-      //node.stop()
     })
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
@@ -89,7 +96,6 @@ app.get('/pins', function (req, res){
         data: pinset,
         status: 200
       })
-      //node.stop()
     })
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
@@ -105,7 +111,6 @@ app.get('/add/:hash', function (req, res){
         data: true,
         status: 200
       })
-      //node.stop()
     })
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
