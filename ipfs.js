@@ -8,9 +8,8 @@ var app = express()
 app.post('/add', function (req, res){
   setTimeout(function () {
     var form = new formidable.IncomingForm();
-    form.parse(req);
+    form.parse(req)
     form.on('file', function (name, file){
-        console.log('UPLOADING FROM ' + file.path + ' TO IPFS');
         fs.readFile(file.path, function(error, content){
           const IPFS = require('ipfs')
           const node = new IPFS({ repo: '~/.ipfs' })
@@ -19,9 +18,7 @@ app.post('/add', function (req, res){
               const hash = results[0].hash
               res.send({
                 data: {
-                  hash: hash,
-                  filename: file.name,
-                  type: file.type
+                  hash: hash
                 },
                 status: 200
               })
@@ -45,7 +42,9 @@ app.get('/get/:hash', function (req, res){
             throw err
         }
         var mimetype = fileType(file)
-        res.setHeader('Content-Type', mimetype.mime);
+        if(mimetype){
+          res.setHeader('Content-Type', mimetype.mime);
+        }
         res.end(file)
         node.stop()
       })
