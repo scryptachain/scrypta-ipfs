@@ -14,7 +14,8 @@
     "file-type": "^10.11.0",
     "formidable": "^1.2.1",
     "http": "0.0.0",
-    "ipfs": "^0.35.0"
+    "ipfs": "^0.35.0",
+    "unzip": "^0.1.11"
   },
   "devDependencies": {
     "mocha": "^6.1.4"

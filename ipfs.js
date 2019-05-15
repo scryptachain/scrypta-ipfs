@@ -21,9 +21,36 @@ app.get('/info', function (req, res){
 app.post('/add', function (req, res){
   setTimeout(function () {
     var form = new formidable.IncomingForm();
-    form.parse(req)
-    form.on('file', function (name, file){
-        fs.readFile(file.path, function(error, content){
+    form.multiples = true
+    form.parse(req, function(err, fields, files) {
+      if(files.files !== undefined){
+        if(fields.folder !== undefined){
+          var ipfscontents = new Array()
+          for(var k in files.files){
+            var file = fs.readFileSync(files.files[k].path)
+            var ipfsobj = {
+              path: fields.folder + '/' + files.files[k].name,
+              content: file
+            }
+            ipfscontents.push(ipfsobj)
+          }
+          node.add(ipfscontents).then(results => {
+            res.send({
+              data: results,
+              status: 200
+            })
+          })
+        }else{
+          res.send({
+            data: {
+              error: "Specify folder first."
+            },
+            status: 422
+          })
+        }
+      }else{
+        if(files.file !== undefined){
+          var content = fs.readFileSync(files.file.path)
           node.add(content).then(results => {
             const hash = results[0].hash
             res.send({
@@ -33,20 +60,16 @@ app.post('/add', function (req, res){
               status: 200
             })
           })
-        })
-    });
-    form.on('field', function (name, field){
-      var content = Buffer.from(field)
-      node.add(content).then(results => {
-        const hash = results[0].hash
-        res.send({
-          data: {
-            hash: hash
-          },
-          status: 200
-        })
-      })
-  });
+        }else{
+          res.send({
+            data: {
+              error: "Specify one or more file first."
+            },
+            status: 422
+          })
+        }
+      }
+    })
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
 
@@ -67,6 +90,35 @@ app.post('/verify/:hash', function (req, res){
           })
         })
     });
+  }, 10 * Math.floor((Math.random() * 10) + 1))
+});
+
+app.get('/ls/:hash', function (req, res){
+  setTimeout(function () {
+    const hash = req.params.hash
+    node.ls(hash, function (err, result) {
+      if (err) {
+          throw err
+      }
+      res.send(result)
+    })
+  }, 10 * Math.floor((Math.random() * 10) + 1))
+});
+
+app.get('/get/:hash/:folder', function (req, res){
+  setTimeout(function () {
+    const hash = req.params.hash
+    const folder = req.params.folder
+    node.cat(hash + '/' + folder, function (err, file) {
+      if (err) {
+          throw err
+      }
+      var mimetype = fileType(file)
+      if(mimetype){
+        res.setHeader('Content-Type', mimetype.mime);
+      }
+      res.end(file)
+    })
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
 
