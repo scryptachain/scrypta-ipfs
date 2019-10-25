@@ -105,7 +105,7 @@ app.get('/ls/:hash', function (req, res){
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
 
-app.get('/get/:hash/:folder', function (req, res){
+app.get('/ipfs/:hash/:folder', function (req, res){
   setTimeout(function () {
     const hash = req.params.hash
     const folder = req.params.folder
@@ -122,7 +122,7 @@ app.get('/get/:hash/:folder', function (req, res){
   }, 10 * Math.floor((Math.random() * 10) + 1))
 });
 
-app.get('/get/:hash', function (req, res){
+app.get('/ipfs/:hash', function (req, res){
   setTimeout(function () {
     const hash = req.params.hash
     node.cat(hash, function (err, file) {
